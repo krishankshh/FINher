@@ -1,0 +1,40 @@
+// client/src/Home.js
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+
+function Home() {
+  const [requests, setRequests] = useState([]);
+
+  // Fetch all funding requests on mount
+  useEffect(() => {
+    axios.get('/api/funding-requests')
+      .then((res) => setRequests(res.data))
+      .catch((err) => console.error('Error fetching requests:', err));
+  }, []);
+
+  return (
+    <div>
+      <h2>All Funding Requests</h2>
+      <div className="row">
+        {requests.map((req) => (
+          <div className="col-md-4 mb-3" key={req._id}>
+            <div className="card">
+              <div className="card-body">
+                <h5 className="card-title">{req.entrepreneurName}</h5>
+                <p className="card-text">
+                  <strong>Amount:</strong> {req.amountRequested} <br />
+                  <strong>Purpose:</strong> {req.purpose}
+                </p>
+                <p className="text-muted">
+                  Created at: {new Date(req.createdAt).toLocaleString()}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default Home;

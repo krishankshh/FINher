@@ -2,21 +2,49 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import FundingRequest from './models/FundingRequest.js'; // Import the funding request model
+import FundingRequest from './models/FundingRequest.js';
+import authRoutes from './routes/authRoutes.js';
+import authMiddleware from './middleware/authMiddleware.js';
+import fundingOptionsRoutes from './routes/fundingOptionsRoutes.js';
+import literacyRoutes from './routes/literacyRoutes.js';
+
+
 
 dotenv.config();
 
 const app = express();
+
+// Middleware
 app.use(express.json());
 app.use(cors());
 
-// Test route
-app.get('/', (req, res) => {
+// Auth Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/funding-options', fundingOptionsRoutes);
+app.use('/api/financial-literacy', literacyRoutes);
+
+
+
+// Test Route
+app.get('/api', (req, res) => {
   res.send('FinHER API is Running!');
 });
 
-// Create a new funding request (POST /api/funding-requests)
-app.post('/api/funding-requests', async (req, res) => {
+// Funding Requests Routes
+
+// Get all funding requests
+app.get('/api/funding-requests', async (req, res) => {
+  try {
+    const requests = await FundingRequest.find();
+    res.status(200).json(requests);
+  } catch (error) {
+    console.error('Error fetching funding requests:', error);
+    res.status(500).json({ message: 'Error fetching funding requests' });
+  }
+});
+
+// Create a new funding request (Protected Route)
+app.post('/api/funding-requests', authMiddleware, async (req, res) => {
   try {
     const { entrepreneurName, amountRequested, purpose } = req.body;
     const newRequest = new FundingRequest({ entrepreneurName, amountRequested, purpose });
@@ -25,17 +53,6 @@ app.post('/api/funding-requests', async (req, res) => {
   } catch (error) {
     console.error('Error creating funding request:', error);
     res.status(500).json({ message: 'Error creating funding request' });
-  }
-});
-
-// Get all funding requests (GET /api/funding-requests)
-app.get('/api/funding-requests', async (req, res) => {
-  try {
-    const requests = await FundingRequest.find();
-    res.status(200).json(requests);
-  } catch (error) {
-    console.error('Error fetching funding requests:', error);
-    res.status(500).json({ message: 'Error fetching funding requests' });
   }
 });
 
@@ -52,3 +69,21 @@ if (MONGO_URI) {
 } else {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}, but no MONGO_URI found`));
 }
+
+// Simulated AI-powered credit evaluation endpoint
+app.post('/api/credit-evaluation', async (req, res) => {
+  try {
+    const { entrepreneurName, amountRequested, purpose } = req.body;
+    // Simple simulated credit evaluation:
+    let score = 850 - (Number(amountRequested) / 100);
+    if (score > 850) score = 850;
+    if (score < 300) score = 300;
+    const recommendation = score > 700 
+      ? "Eligible for standard funding" 
+      : "Consider alternative financing options";
+    res.status(200).json({ creditScore: score, recommendation });
+  } catch (error) {
+    console.error("Error evaluating credit:", error);
+    res.status(500).json({ message: "Error evaluating credit" });
+  }
+});
