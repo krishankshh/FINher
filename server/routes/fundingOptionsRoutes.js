@@ -1,10 +1,9 @@
-// server/routes/fundingOptionsRoutes.js
 import express from 'express';
 import AlternativeFundingOption from '../models/AlternativeFundingOption.js';
 
 const router = express.Router();
 
-// GET /api/funding-options - list all alternative funding options
+// GET all alternative funding options
 router.get('/', async (req, res) => {
   try {
     const options = await AlternativeFundingOption.find();

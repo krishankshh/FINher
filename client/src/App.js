@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'animate.css';
+
 import NavBar from './NavBar';
 import Home from './Home';
 import Auth from './Auth';
@@ -8,12 +10,14 @@ import Dashboard from './Dashboard';
 import CreditEvaluation from './CreditEvaluation';
 import FinancialLiteracy from './FinancialLiteracy';
 import AlternativeFunding from './AlternativeFunding';
+import FundingRequestDetail from './FundingRequestDetail';
+import Footer from './Footer';
 
 function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState('');
 
-  // Retrieve persisted login info from localStorage
+  // Load user/token from localStorage (if present)
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
@@ -23,7 +27,7 @@ function App() {
     }
   }, []);
 
-  // Called when authentication (login) is successful
+  // Callback for successful Auth
   const handleAuthSuccess = (loggedInUser, authToken) => {
     setUser(loggedInUser);
     setToken(authToken);
@@ -31,7 +35,7 @@ function App() {
     localStorage.setItem('user', JSON.stringify(loggedInUser));
   };
 
-  // Logout: clear state and localStorage
+  // Logout handler
   const handleLogout = () => {
     setUser(null);
     setToken('');
@@ -39,31 +43,41 @@ function App() {
     localStorage.removeItem('user');
   };
 
+  // We use "d-flex flex-column min-vh-100" so the footer sticks to the bottom.
   return (
-    <Router>
-      <NavBar user={user} onLogout={handleLogout} />
-      <div className="container mt-4">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/credit-evaluation" element={<CreditEvaluation />} />
-          <Route path="/financial-literacy" element={<FinancialLiteracy />} />
-          <Route path="/alternative-funding" element={<AlternativeFunding />} />
-          <Route
-            path="/auth"
-            element={
-              user ? <Navigate to="/dashboard" /> : <Auth onAuthSuccess={handleAuthSuccess} />
-            }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              user ? <Dashboard user={user} token={token} /> : <Navigate to="/auth" />
-            }
-          />
-          <Route path="*" element={<h2>404 - Page Not Found</h2>} />
-        </Routes>
-      </div>
-    </Router>
+    <div className="d-flex flex-column min-vh-100">
+      <Router>
+        <NavBar user={user} onLogout={handleLogout} />
+
+        {/* Main container grows to fill vertical space */}
+        <div className="container flex-grow-1 mt-4">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/credit-evaluation" element={<CreditEvaluation />} />
+            <Route path="/financial-literacy" element={<FinancialLiteracy />} />
+            <Route path="/alternative-funding" element={<AlternativeFunding />} />
+
+            <Route
+              path="/auth"
+              element={
+                user ? <Navigate to="/dashboard" /> : <Auth onAuthSuccess={handleAuthSuccess} />
+              }
+            />
+            <Route
+              path="/dashboard"
+              element={
+                user ? <Dashboard user={user} token={token} /> : <Navigate to="/auth" />
+              }
+            />
+            <Route path="/funding/:id" element={<FundingRequestDetail />} />
+            <Route path="*" element={<h2>404 - Page Not Found</h2>} />
+          </Routes>
+        </div>
+
+        {/* Footer pinned to bottom */}
+        <Footer />
+      </Router>
+    </div>
   );
 }
 

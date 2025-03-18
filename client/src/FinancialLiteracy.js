@@ -1,4 +1,3 @@
-// client/src/FinancialLiteracy.js
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
@@ -25,7 +24,12 @@ function FinancialLiteracy() {
                   <h5 className="card-title">{resource.title}</h5>
                   <p className="card-text">{resource.description}</p>
                   {resource.url && (
-                    <a href={resource.url} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
+                    <a
+                      href={resource.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-secondary"
+                    >
                       Learn More
                     </a>
                   )}

@@ -1,4 +1,3 @@
-// client/src/CreditEvaluation.js
 import React, { useState } from 'react';
 import axios from 'axios';
 
@@ -33,15 +32,36 @@ function CreditEvaluation() {
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
           <label>Entrepreneur Name:</label>
-          <input type="text" name="entrepreneurName" className="form-control" value={formData.entrepreneurName} onChange={handleChange} required />
+          <input
+            type="text"
+            name="entrepreneurName"
+            className="form-control"
+            value={formData.entrepreneurName}
+            onChange={handleChange}
+            required
+          />
         </div>
         <div className="mb-3">
           <label>Amount Requested:</label>
-          <input type="number" name="amountRequested" className="form-control" value={formData.amountRequested} onChange={handleChange} required />
+          <input
+            type="number"
+            name="amountRequested"
+            className="form-control"
+            value={formData.amountRequested}
+            onChange={handleChange}
+            required
+          />
         </div>
         <div className="mb-3">
           <label>Purpose:</label>
-          <input type="text" name="purpose" className="form-control" value={formData.purpose} onChange={handleChange} required />
+          <input
+            type="text"
+            name="purpose"
+            className="form-control"
+            value={formData.purpose}
+            onChange={handleChange}
+            required
+          />
         </div>
         <button type="submit" className="btn btn-primary">Evaluate Credit</button>
       </form>

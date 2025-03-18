@@ -1,4 +1,3 @@
-// client/src/AlternativeFunding.js
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
@@ -25,7 +24,12 @@ function AlternativeFunding() {
                   <h5 className="card-title">{option.type}</h5>
                   <p className="card-text">{option.description}</p>
                   {option.link && (
-                    <a href={option.link} target="_blank" rel="noopener noreferrer" className="btn btn-info">
+                    <a
+                      href={option.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-info"
+                    >
                       Learn More
                     </a>
                   )}

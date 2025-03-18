@@ -1,10 +1,9 @@
-// server/routes/literacyRoutes.js
 import express from 'express';
 import FinancialLiteracyResource from '../models/FinancialLiteracyResource.js';
 
 const router = express.Router();
 
-// GET /api/financial-literacy - list all financial literacy resources
+// GET all financial literacy resources
 router.get('/', async (req, res) => {
   try {
     const resources = await FinancialLiteracyResource.find();
@@ -15,7 +14,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Optionally, an endpoint to add new resources (could be admin-only)
+// POST a new financial literacy resource (optional, admin-only)
 router.post('/', async (req, res) => {
   try {
     const { title, description, url } = req.body;
