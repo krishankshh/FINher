@@ -1,3 +1,4 @@
+// client/src/Auth.js
 import React, { useState } from 'react';
 import axios from 'axios';
 
@@ -14,14 +15,14 @@ function Auth({ onAuthSuccess }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (isLogin) {
-        // LOGIN
+        // Login
         const res = await axios.post('/api/auth/login', {
           email: formData.email,
           password: formData.password
@@ -29,7 +30,7 @@ function Auth({ onAuthSuccess }) {
         setMessage(`Login successful! Welcome ${res.data.user.name}`);
         onAuthSuccess(res.data.user, res.data.token);
       } else {
-        // REGISTER
+        // Register
         const res = await axios.post('/api/auth/register', {
           name: formData.name,
           email: formData.email,
@@ -43,8 +44,8 @@ function Auth({ onAuthSuccess }) {
   };
 
   return (
-    <div className="mx-auto" style={{ maxWidth: '400px' }}>
-      <h2 className="text-center mt-4">{isLogin ? 'Login' : 'Register'}</h2>
+    <div className="mx-auto" style={{ maxWidth: '400px', marginTop: '50px' }}>
+      <h2 className="text-center">{isLogin ? 'Login' : 'Register'}</h2>
       <form onSubmit={handleSubmit} className="mt-3">
         {!isLogin && (
           <div className="mb-3">
@@ -85,12 +86,23 @@ function Auth({ onAuthSuccess }) {
           {isLogin ? 'Login' : 'Register'}
         </button>
       </form>
+
       {message && <p className="mt-3 text-center text-success">{message}</p>}
+
       <div className="text-center mt-2">
         <button onClick={toggleMode} className="btn btn-link">
           {isLogin ? "Don't have an account? Register" : "Already have an account? Login"}
         </button>
       </div>
+
+      {/* Forgot Password? link for OTP-based reset */}
+      {isLogin && (
+        <div className="text-center mt-2">
+          <a href="/forgot-password" className="text-decoration-none">
+            Forgot Password? (OTP)
+          </a>
+        </div>
+      )}
     </div>
   );
 }

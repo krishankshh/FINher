@@ -19,9 +19,9 @@ function Footer() {
           {/* Middle Column: Contact Info */}
           <div className="col-md-4 text-start">
             <h5 className="mb-2">Contact Us</h5>
-            <p className="mb-1">123 FinHER Street, City, Country</p>
-            <p className="mb-1">Email: info@finher.com</p>
-            <p>Phone: +1 (123) 456-7890</p>
+            <p className="mb-1">123 FinHER Street, Mumbai, Maharashtra</p>
+            <p className="mb-1">Email: projects5423@gmail.com</p>
+            <p>Phone: +91 885022122</p>
           </div>
 
           {/* Right Column: Social Icons */}

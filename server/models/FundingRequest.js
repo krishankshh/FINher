@@ -1,4 +1,3 @@
-// server/models/FundingRequest.js
 import mongoose from 'mongoose';
 
 const FundingRequestSchema = new mongoose.Schema({
