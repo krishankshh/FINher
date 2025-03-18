@@ -1,13 +1,11 @@
+// server/models/AlternativeFundingOption.js
 import mongoose from 'mongoose';
 
 const AlternativeFundingOptionSchema = new mongoose.Schema({
-  type: {
-    type: String,
-    required: true,
-    enum: ['Crowdfunding', 'Peer-to-Peer Lending', 'Microloan', 'Angel Investment']
-  },
+  name: { type: String, required: true },
   description: { type: String, required: true },
-  link: { type: String }
+  eligibility: { type: String },
+  applicationLink: { type: String }
 }, { timestamps: true });
 
 const AlternativeFundingOption = mongoose.model('AlternativeFundingOption', AlternativeFundingOptionSchema);

@@ -4,13 +4,15 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import bcrypt from 'bcrypt';
-import crypto from 'crypto'; // for generating numeric OTP codes or random strings
 
-// Models
+// Import Models
 import User from './models/User.js';
 import FundingRequest from './models/FundingRequest.js';
+import AlternativeFundingOption from './models/AlternativeFundingOption.js';
+import FinancialLiteracyResource from './models/FinancialLiteracyResource.js';
 
 dotenv.config();
 
@@ -18,176 +20,60 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// -------------------------
-// Test route
-// -------------------------
-app.get('/api', (req, res) => {
-  res.send('FinHER API (OTP-based password reset) is Running!');
-});
-
-// -------------------------
-// Auth: Register
-// -------------------------
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    // Check if user exists
-    const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashed = await bcrypt.hash(password, salt);
-
-    const newUser = new User({
-      name,
-      email,
-      password: hashed
-    });
-    await newUser.save();
-
-    return res.status(201).json({
-      message: 'User registered successfully'
-    });
-  } catch (error) {
-    console.error('Register Error:', error);
-    return res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// -------------------------
-// Auth: Login
-// -------------------------
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
-
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
-
-    // In a real app, create a JWT. We'll just return a fake token for demo
-    const token = 'FAKE_JWT_TOKEN';
-    return res.json({
-      message: 'Login successful',
-      token,
-      user: { _id: user._id, name: user.name, email: user.email }
-    });
-  } catch (error) {
-    console.error('Login Error:', error);
-    return res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// -------------------------
-// OTP-based Password Reset
-// -------------------------
-
-// 1) Send OTP
-app.post('/api/auth/send-otp', async (req, res) => {
-  try {
-    const { email } = req.body;
-    // Check user
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'No user found with that email' });
-    }
-
-    // Generate a 6-digit numeric OTP
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString(); // e.g. "123456"
-    // or crypto.randomBytes(3).toString('hex') for a hex code
-
-    // Set expiry (e.g., 10 minutes from now)
-    const expiry = Date.now() + 10 * 60 * 1000; // 10 minutes
-
-    user.otpCode = otpCode;
-    user.otpExpires = expiry;
-    await user.save();
-
-    // Send OTP via Nodemailer
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: user.email,
-      subject: 'FinHER OTP Code',
-      text: `Your OTP code is: ${otpCode}\nThis code will expire in 10 minutes.`
-    };
-
-    await transporter.sendMail(mailOptions);
-
-    return res.status(200).json({ message: 'OTP sent successfully' });
-  } catch (error) {
-    console.error('Send OTP Error:', error);
-    return res.status(500).json({ message: 'Server error sending OTP' });
-  }
-});
-
-// 2) Verify OTP & Reset Password
-app.post('/api/auth/verify-otp', async (req, res) => {
-  try {
-    const { email, otpCode, newPassword } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'No user found with that email' });
-    }
-
-    // Check if OTP matches and not expired
-    if (user.otpCode !== otpCode) {
-      return res.status(400).json({ message: 'Invalid OTP code' });
-    }
-    if (Date.now() > user.otpExpires) {
-      return res.status(400).json({ message: 'OTP has expired' });
-    }
-
-    // Hash the new password
-    const salt = await bcrypt.genSalt(10);
-    const hashed = await bcrypt.hash(newPassword, salt);
-    user.password = hashed;
-
-    // Clear OTP fields
-    user.otpCode = undefined;
-    user.otpExpires = undefined;
-    await user.save();
-
-    return res.status(200).json({ message: 'Password reset successful' });
-  } catch (error) {
-    console.error('Verify OTP Error:', error);
-    return res.status(500).json({ message: 'Server error verifying OTP' });
-  }
-});
-
-// -------------------------
-// Demo Auth Middleware for Protected Routes
-// -------------------------
+/* ----------------------------------------------------------------------------
+   Simulated Auth Middleware
+   ----------------------------------------------------------------------------
+   For demonstration, we simulate authentication by checking that a token is
+   present in the headers. We then set req.user.userId to a fixed, valid
+   ObjectId string (24 hex characters). Make sure this matches the DB you expect.
+------------------------------------------------------------------------------- */
 const authMiddleware = (req, res, next) => {
-  // In real app, verify JWT. For now, assume user is always "logged in" if token present
   const token = req.headers.authorization;
   if (!token) {
     return res.status(401).json({ message: 'No token provided' });
   }
-  // Fake user
-  req.user = { userId: 'SIMULATED_USER_ID' };
+  // Set a fixed, valid ObjectId string so that createdBy is valid.
+  req.user = { userId: '64c4ef283db2a23eaa6d6f41' };
   next();
 };
 
-// -------------------------
-// Funding Request CRUD (Protected)
-// -------------------------
+/* ----------------------------------------------------------------------------
+   MAIN ROUTES
+------------------------------------------------------------------------------- */
+
+// Test Route
+app.get('/', (req, res) => {
+  res.send('FinHER API (OTP-based password reset) is Running!');
+});
+
+/* ------------------------- Funding Requests ------------------------- */
+
+// Public GET: All funding requests
+app.get('/api/funding-requests', async (req, res) => {
+  try {
+    const requests = await FundingRequest.find();
+    res.status(200).json(requests);
+  } catch (error) {
+    console.error('Error fetching funding requests:', error);
+    res.status(500).json({ message: 'Error fetching funding requests' });
+  }
+});
+
+// Public GET: Single funding request details (for funding detail view)
+app.get('/api/funding-requests/:id', async (req, res) => {
+  try {
+    const request = await FundingRequest.findById(req.params.id);
+    if (!request) {
+      return res.status(404).json({ message: 'Funding request not found' });
+    }
+    res.status(200).json(request);
+  } catch (error) {
+    console.error('Error fetching funding request details:', error);
+    res.status(500).json({ message: 'Error fetching funding request details' });
+  }
+});
+
+// Protected GET: Get funding requests created by the logged-in user
 app.get('/api/my-funding-requests', authMiddleware, async (req, res) => {
   try {
     const requests = await FundingRequest.find({ createdBy: req.user.userId });
@@ -198,6 +84,7 @@ app.get('/api/my-funding-requests', authMiddleware, async (req, res) => {
   }
 });
 
+// Protected POST: Create a new funding request
 app.post('/api/funding-requests', authMiddleware, async (req, res) => {
   try {
     const { entrepreneurName, amountRequested, purpose, description, contactPhone, contactAddress } = req.body;
@@ -210,62 +97,80 @@ app.post('/api/funding-requests', authMiddleware, async (req, res) => {
       contactAddress,
       createdBy: req.user.userId
     });
-    const saved = await newRequest.save();
-    res.status(201).json(saved);
+    const savedRequest = await newRequest.save();
+    res.status(201).json(savedRequest);
   } catch (error) {
-    console.error('Error creating request:', error);
+    console.error('Error creating funding request:', error);
     res.status(500).json({ message: 'Error creating funding request' });
   }
 });
 
+// Protected PUT: Update a funding request
 app.put('/api/funding-requests/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const existing = await FundingRequest.findById(id);
-    if (!existing) {
+    const userId = req.user.userId;
+    const { entrepreneurName, amountRequested, purpose, description, contactPhone, contactAddress } = req.body;
+
+    const existingRequest = await FundingRequest.findById(id);
+    if (!existingRequest) {
       return res.status(404).json({ message: 'Funding request not found' });
     }
-    if (existing.createdBy.toString() !== req.user.userId) {
-      return res.status(403).json({ message: 'Not authorized' });
+    if (existingRequest.createdBy.toString() !== userId) {
+      return res.status(403).json({ message: 'Not authorized to update this request' });
     }
 
-    const { entrepreneurName, amountRequested, purpose, description, contactPhone, contactAddress } = req.body;
-    existing.entrepreneurName = entrepreneurName;
-    existing.amountRequested = amountRequested;
-    existing.purpose = purpose;
-    existing.description = description;
-    existing.contactPhone = contactPhone;
-    existing.contactAddress = contactAddress;
+    existingRequest.entrepreneurName = entrepreneurName;
+    existingRequest.amountRequested = amountRequested;
+    existingRequest.purpose = purpose;
+    existingRequest.description = description;
+    existingRequest.contactPhone = contactPhone;
+    existingRequest.contactAddress = contactAddress;
 
-    const updated = await existing.save();
-    res.status(200).json(updated);
+    const updatedRequest = await existingRequest.save();
+    res.status(200).json(updatedRequest);
   } catch (error) {
-    console.error('Error updating request:', error);
-    res.status(500).json({ message: 'Error updating request' });
+    console.error('Error updating funding request:', error);
+    res.status(500).json({ message: 'Error updating funding request' });
   }
 });
 
+// Protected DELETE: Delete a funding request
 app.delete('/api/funding-requests/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const existing = await FundingRequest.findById(id);
-    if (!existing) {
+    const userId = req.user.userId;
+
+    const existingRequest = await FundingRequest.findById(id);
+    if (!existingRequest) {
       return res.status(404).json({ message: 'Funding request not found' });
     }
-    if (existing.createdBy.toString() !== req.user.userId) {
-      return res.status(403).json({ message: 'Not authorized' });
+    if (existingRequest.createdBy.toString() !== userId) {
+      return res.status(403).json({ message: 'Not authorized to delete this request' });
     }
-    await existing.deleteOne();
+
+    await existingRequest.deleteOne();
     res.status(200).json({ message: 'Funding request deleted successfully' });
   } catch (error) {
-    console.error('Error deleting request:', error);
-    res.status(500).json({ message: 'Error deleting request' });
+    console.error('Error deleting funding request:', error);
+    res.status(500).json({ message: 'Error deleting funding request' });
   }
 });
 
-// -------------------------
-// AI Credit Evaluation
-// -------------------------
+/* ------------------------- Alternative Funding Options ------------------------- */
+
+// GET alternative funding options
+import fundingOptionsRoutes from './routes/fundingOptionsRoutes.js';
+app.use('/api/funding-options', fundingOptionsRoutes);
+
+/* ------------------------- Financial Literacy Resources ------------------------- */
+
+// GET financial literacy resources
+import literacyRoutes from './routes/literacyRoutes.js';
+app.use('/api/financial-literacy', literacyRoutes);
+
+/* ------------------------- AI Credit Evaluation ------------------------- */
+
 app.post('/api/credit-evaluation', async (req, res) => {
   try {
     const { entrepreneurName, amountRequested, purpose } = req.body;
@@ -283,11 +188,85 @@ app.post('/api/credit-evaluation', async (req, res) => {
   }
 });
 
-// Connect to MongoDB
+/* ------------------------- OTP-based Password Reset ------------------------- */
+
+// POST: Send OTP for password reset
+app.post('/api/auth/send-otp', async (req, res) => {
+  console.log('POST /api/auth/send-otp called');
+  console.log('Request body:', req.body);
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      console.log('No user found for email:', email);
+      return res.status(400).json({ message: 'No user found with that email' });
+    }
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    user.otpCode = otpCode;
+    user.otpExpires = expiry;
+    await user.save();
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    const resetText = `Your OTP code is: ${otpCode}\nThis code will expire in 10 minutes.`;
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: 'FinHER OTP Code',
+      text: resetText
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('OTP sent successfully to:', user.email);
+    return res.status(200).json({ message: 'OTP sent successfully' });
+  } catch (error) {
+    console.error('Error in send-otp route:', error);
+    return res.status(500).json({ message: 'Server error sending OTP' });
+  }
+});
+
+// POST: Verify OTP and reset password
+app.post('/api/auth/verify-otp', async (req, res) => {
+  try {
+    const { email, otpCode, newPassword } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'No user found with that email' });
+    }
+    if (user.otpCode !== otpCode) {
+      return res.status(400).json({ message: 'Invalid OTP code' });
+    }
+    if (Date.now() > user.otpExpires) {
+      return res.status(400).json({ message: 'OTP has expired' });
+    }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    user.password = hashedPassword;
+    user.otpCode = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+    return res.status(200).json({ message: 'Password reset successful' });
+  } catch (error) {
+    console.error('Error in verify-otp route:', error);
+    return res.status(500).json({ message: 'Server error verifying OTP' });
+  }
+});
+
+/* ------------------------- DB Connection ------------------------- */
 const PORT = process.env.PORT || 5000;
-mongoose.connect(process.env.MONGO_URI || '', { useNewUrlParser: true, useUnifiedTopology: true })
+const MONGO_URI = process.env.MONGO_URI || '';
+
+mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
     console.log('Connected to MongoDB');
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
-  .catch((err) => console.log('MongoDB Error:', err.message));
+  .catch((err) => console.log('MongoDB Connection Error:', err.message));
