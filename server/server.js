@@ -14,6 +14,7 @@ import FundingRequest from './models/FundingRequest.js';
 import AlternativeFundingOption from './models/AlternativeFundingOption.js';
 import FinancialLiteracyResource from './models/FinancialLiteracyResource.js';
 
+
 dotenv.config();
 
 const app = express();
@@ -170,6 +171,11 @@ import literacyRoutes from './routes/literacyRoutes.js';
 app.use('/api/financial-literacy', literacyRoutes);
 
 /* ------------------------- AI Credit Evaluation ------------------------- */
+
+import creditEvaluationRoutes from './routes/creditEvaluationRoutes.js';
+
+// Later, register the route (e.g., after funding options and literacy routes)
+app.use('/api/credit-evaluation', creditEvaluationRoutes);
 
 app.post('/api/credit-evaluation', async (req, res) => {
   try {

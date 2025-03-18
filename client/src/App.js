@@ -12,14 +12,14 @@ import CreditEvaluation from './CreditEvaluation';
 import FinancialLiteracy from './FinancialLiteracy';
 import AlternativeFunding from './AlternativeFunding';
 import FundingRequestDetail from './FundingRequestDetail';
-import ForgotPasswordOTP from './ForgotPasswordOTP'; // or your forgot-password component
+import ForgotPasswordOTP from './ForgotPasswordOTP';
+import ResetPassword from './ResetPassword';
 import Footer from './Footer';
 
 function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState('');
 
-  // Load user/token from localStorage on mount
   useEffect(() => {
     const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
@@ -29,7 +29,6 @@ function App() {
     }
   }, []);
 
-  // Handle successful login/registration
   const handleAuthSuccess = (loggedInUser, authToken) => {
     setUser(loggedInUser);
     setToken(authToken);
@@ -37,7 +36,6 @@ function App() {
     localStorage.setItem('user', JSON.stringify(loggedInUser));
   };
 
-  // Logout handler
   const handleLogout = () => {
     setUser(null);
     setToken('');
@@ -49,18 +47,16 @@ function App() {
     <div className="d-flex flex-column min-vh-100">
       <Router>
         <NavBar user={user} onLogout={handleLogout} />
-
         {/* 
-          Add 'mb-5' to create extra space at the bottom 
-          so content doesn't touch the footer.
+          Added mb-5 pb-5 to create a bottom margin & padding,
+          ensuring content doesn't crowd the footer.
         */}
-        <div className="container flex-grow-1 mt-4 mb-5">
+        <div className="container flex-grow-1 mt-4 mb-5 pb-5">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/credit-evaluation" element={<CreditEvaluation />} />
             <Route path="/financial-literacy" element={<FinancialLiteracy />} />
             <Route path="/alternative-funding" element={<AlternativeFunding />} />
-            
             <Route
               path="/auth"
               element={
@@ -74,14 +70,11 @@ function App() {
               }
             />
             <Route path="/funding/:id" element={<FundingRequestDetail />} />
-
-            {/* Example of an OTP-based forgot-password route */}
             <Route path="/forgot-password" element={<ForgotPasswordOTP />} />
-
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="*" element={<h2>404 - Page Not Found</h2>} />
           </Routes>
         </div>
-
         <Footer />
       </Router>
     </div>
