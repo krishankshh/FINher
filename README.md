@@ -83,45 +83,45 @@ FinHER is a comprehensive web platform designed to empower women entrepreneurs b
 
 2. Install dependencies:
 
-```bash
-npm install
+    ```bash
+    npm install
 
 3. Create a .env file in the server folder with the following variables (replace placeholders with your credentials):
 
-```bash
-MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<dbname>?retryWrites=true&w=majority
-JWT_SECRET=your_jwt_secret
-EMAIL_USER=yourgmail@gmail.com
-EMAIL_PASS=your_app_password
+    ```bash
+    MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<dbname>?retryWrites=true&w=majority
+    JWT_SECRET=your_jwt_secret
+    EMAIL_USER=yourgmail@gmail.com
+    EMAIL_PASS=your_app_password
 
 4. Start the server:
 
-```bash
-npm run dev
+    ```bash
+    npm run dev
 
 
 ### Client Setup
 1. Navigate to the client directory:
 
-```bash
-cd client
+    ```bash
+    cd client
 
 2. Install dependencies:
 
-```bash
-npm install
+    ```bash
+    npm install
 
 3. Ensure your client/package.json includes a proxy:
 
-```json
-{
-  "proxy": "http://localhost:5000"
-}
+    ```json
+    {
+    "proxy": "http://localhost:5000"
+    }
 
 4. Start the React app:
 
-```bash
-npm start
+    ```bash
+    npm start
 
 --
 
@@ -147,42 +147,42 @@ Admin users can log in (with role: "admin") to access the admin dashboard for ma
 --
 
 Project Structure
-```java
-Copy
-Edit
-FinHER/
-├── client/
-│   ├── public/
-│   ├── src/
-│   │   ├── App.js
-│   │   ├── NavBar.js
-│   │   ├── AdminDashboard.js
-│   │   ├── Auth.js
-│   │   ├── Home.js
-│   │   ├── Dashboard.js
-│   │   ├── CreditEvaluation.js
-│   │   ├── FinancialLiteracy.js
-│   │   ├── AlternativeFunding.js
-│   │   ├── FundingRequestDetail.js
-│   │   ├── ForgotPasswordOTP.js
-│   │   ├── ResetPassword.js
-│   │   └── ...other components
-│   └── package.json
-├── server/
-│   ├── models/
-│   │   ├── User.js
-│   │   ├── FundingRequest.js
-│   │   ├── AlternativeFundingOption.js
-│   │   └── FinancialLiteracyResource.js
-│   ├── routes/
-│   │   ├── literacyRoutes.js
-│   │   └── ...other route files
-│   ├── middleware/
-│   │   └── authMiddleware.js
-│   ├── server.js
-│   └── package.json
-├── .env (in server/)
-└── README.md
+    ```java
+    Copy
+    Edit
+    FinHER/
+    ├── client/
+    │   ├── public/
+    │   ├── src/
+    │   │   ├── App.js
+    │   │   ├── NavBar.js
+    │   │   ├── AdminDashboard.js
+    │   │   ├── Auth.js
+    │   │   ├── Home.js
+    │   │   ├── Dashboard.js
+    │   │   ├── CreditEvaluation.js
+    │   │   ├── FinancialLiteracy.js
+    │   │   ├── AlternativeFunding.js
+    │   │   ├── FundingRequestDetail.js
+    │   │   ├── ForgotPasswordOTP.js
+    │   │   ├── ResetPassword.js
+    │   │   └── ...other components
+    │   └── package.json
+    ├── server/
+    │   ├── models/
+    │   │   ├── User.js
+    │   │   ├── FundingRequest.js
+    │   │   ├── AlternativeFundingOption.js
+    │   │   └── FinancialLiteracyResource.js
+    │   ├── routes/
+    │   │   ├── literacyRoutes.js
+    │   │   └── ...other route files
+    │   ├── middleware/
+    │   │   └── authMiddleware.js
+    │   ├── server.js
+    │   └── package.json
+    ├── .env (in server/)
+    └── README.md
 
 --
 
@@ -202,5 +202,5 @@ Implement feedback forms or surveys to gather insights and further improve the p
 --
 
 License
-```vbnet
-This project is open source and available under the MIT License.
+    ```vbnet
+    This project is open source and available under the MIT License.
