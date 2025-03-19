@@ -147,6 +147,7 @@ Admin users can log in (with role: "admin") to access the admin dashboard for ma
 --
 
 Project Structure
+
     ```bash
     Copy
     Edit
@@ -202,5 +203,6 @@ Implement feedback forms or surveys to gather insights and further improve the p
 --
 
 License
+
     ```bash
     This project is open source and available under the MIT License.
