@@ -1,6 +1,6 @@
 // client/src/FinancialLiteracy.js
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from './axiosInstance';
 
 function FinancialLiteracy() {
   const [resources, setResources] = useState([]);

@@ -1,6 +1,6 @@
 // client/src/AdminDashboard.js
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axios from './axiosInstance';
 import { Link } from 'react-router-dom';
 
 function AdminDashboard() {
