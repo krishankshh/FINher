@@ -79,3 +79,128 @@ FinHER is a comprehensive web platform designed to empower women entrepreneurs b
 1. **Clone the repository** and navigate to the server directory:
    ```bash
    cd server
+
+
+2. Install dependencies:
+
+```bash
+npm install
+
+3. Create a .env file in the server folder with the following variables (replace placeholders with your credentials):
+
+```bash
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<dbname>?retryWrites=true&w=majority
+JWT_SECRET=your_jwt_secret
+EMAIL_USER=yourgmail@gmail.com
+EMAIL_PASS=your_app_password
+
+4. Start the server:
+
+```bash
+npm run dev
+
+
+### Client Setup
+1. Navigate to the client directory:
+
+```bash
+cd client
+
+2. Install dependencies:
+
+```bash
+npm install
+
+3. Ensure your client/package.json includes a proxy:
+
+```json
+{
+  "proxy": "http://localhost:5000"
+}
+
+4. Start the React app:
+
+```bash
+npm start
+
+--
+
+## Usage
+Authentication:
+Users can register, log in, and reset their passwords using OTP. The JWT token stores the user role.
+
+Funding Requests:
+Logged-in users can create and manage funding requests. Admins have the ability to manage all requests.
+
+Financial Literacy Resources:
+Everyone can view resources and search by title or description. Only logged-in users can add new resources, which display the creator's name and creation date.
+
+Alternative Financing:
+View information on various alternative financing channels.
+
+AI Credit Evaluation:
+Access a simulated AI tool that calculates a credit score and provides a funding recommendation.
+
+Admin Panel:
+Admin users can log in (with role: "admin") to access the admin dashboard for managing all funding requests and resources.
+
+--
+
+Project Structure
+```java
+Copy
+Edit
+FinHER/
+├── client/
+│   ├── public/
+│   ├── src/
+│   │   ├── App.js
+│   │   ├── NavBar.js
+│   │   ├── AdminDashboard.js
+│   │   ├── Auth.js
+│   │   ├── Home.js
+│   │   ├── Dashboard.js
+│   │   ├── CreditEvaluation.js
+│   │   ├── FinancialLiteracy.js
+│   │   ├── AlternativeFunding.js
+│   │   ├── FundingRequestDetail.js
+│   │   ├── ForgotPasswordOTP.js
+│   │   ├── ResetPassword.js
+│   │   └── ...other components
+│   └── package.json
+├── server/
+│   ├── models/
+│   │   ├── User.js
+│   │   ├── FundingRequest.js
+│   │   ├── AlternativeFundingOption.js
+│   │   └── FinancialLiteracyResource.js
+│   ├── routes/
+│   │   ├── literacyRoutes.js
+│   │   └── ...other route files
+│   ├── middleware/
+│   │   └── authMiddleware.js
+│   ├── server.js
+│   └── package.json
+├── .env (in server/)
+└── README.md
+
+--
+
+Future Enhancements
+Enhanced UI/UX:
+Continue to refine animations, transitions, and visual design for a smoother user experience.
+
+Advanced AI Integration:
+Replace the simulated credit evaluation with a real ML model or integrate external credit scoring APIs.
+
+Expanded Admin Features:
+Add detailed content moderation and analytics in the admin panel.
+
+User Feedback:
+Implement feedback forms or surveys to gather insights and further improve the platform.
+
+--
+
+License
+```vbnet
+This project is open source and available under the MIT License.
