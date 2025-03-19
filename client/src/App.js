@@ -1,8 +1,11 @@
 // client/src/App.js
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'animate.css';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import NavBar from './NavBar';
 import Home from './Home';
@@ -14,10 +17,53 @@ import AlternativeFunding from './AlternativeFunding';
 import FundingRequestDetail from './FundingRequestDetail';
 import ForgotPasswordOTP from './ForgotPasswordOTP';
 import ResetPassword from './ResetPassword';
+import AdminDashboard from './AdminDashboard';
 import Footer from './Footer';
 
-// Import your AdminDashboard (create it if you haven't yet)
-import AdminDashboard from './AdminDashboard';
+function AppContent({ user, onLogout, handleAuthSuccess, token }) {
+  const location = useLocation();
+  return (
+    <>
+      <NavBar user={user} onLogout={onLogout} />
+      <div className="container flex-grow-1 mt-4 mb-5 pb-5">
+        <AnimatePresence exitBeforeEnter>
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Routes location={location}>
+              <Route path="/" element={<Home />} />
+              <Route path="/credit-evaluation" element={<CreditEvaluation />} />
+              <Route path="/financial-literacy" element={<FinancialLiteracy />} />
+              <Route path="/alternative-funding" element={<AlternativeFunding />} />
+              <Route
+                path="/auth"
+                element={user ? <Navigate to="/dashboard" /> : <Auth onAuthSuccess={handleAuthSuccess} />}
+              />
+              <Route
+                path="/dashboard"
+                element={user ? <Dashboard user={user} token={token} /> : <Navigate to="/auth" />}
+              />
+              <Route path="/funding/:id" element={<FundingRequestDetail />} />
+              <Route path="/forgot-password" element={<ForgotPasswordOTP />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
+              <Route
+                path="/admin"
+                element={user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />}
+              />
+              <Route path="*" element={<h2>404 - Page Not Found</h2>} />
+            </Routes>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+      <Footer />
+      <ToastContainer position="top-right" autoClose={3000} />
+    </>
+  );
+}
 
 function App() {
   const [user, setUser] = useState(null);
@@ -49,43 +95,7 @@ function App() {
   return (
     <div className="d-flex flex-column min-vh-100">
       <Router>
-        <NavBar user={user} onLogout={handleLogout} />
-        {/* Extra bottom margin & padding to avoid content crowding the footer */}
-        <div className="container flex-grow-1 mt-4 mb-5 pb-5">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/credit-evaluation" element={<CreditEvaluation />} />
-            <Route path="/financial-literacy" element={<FinancialLiteracy />} />
-            <Route path="/alternative-funding" element={<AlternativeFunding />} />
-
-            <Route
-              path="/auth"
-              element={
-                user ? <Navigate to="/dashboard" /> : <Auth onAuthSuccess={handleAuthSuccess} />
-              }
-            />
-            <Route
-              path="/dashboard"
-              element={
-                user ? <Dashboard user={user} token={token} /> : <Navigate to="/auth" />
-              }
-            />
-            <Route path="/funding/:id" element={<FundingRequestDetail />} />
-            <Route path="/forgot-password" element={<ForgotPasswordOTP />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
-
-            {/* Admin route: only accessible if user && user.role === 'admin' */}
-            <Route
-              path="/admin"
-              element={
-                user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />
-              }
-            />
-
-            <Route path="*" element={<h2>404 - Page Not Found</h2>} />
-          </Routes>
-        </div>
-        <Footer />
+        <AppContent user={user} token={token} onLogout={handleLogout} handleAuthSuccess={handleAuthSuccess} />
       </Router>
     </div>
   );

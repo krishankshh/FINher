@@ -1,14 +1,13 @@
 // client/src/AdminDashboard.js
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 
 function AdminDashboard() {
   const [fundingRequests, setFundingRequests] = useState([]);
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
-  // Retrieve token from localStorage so we can send it in headers
   const token = localStorage.getItem('token') || '';
 
   useEffect(() => {
@@ -18,14 +17,11 @@ function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true);
     setError('');
-
     try {
-      // Fetch all funding requests
-      const reqRes = await axios.get('/api/funding-requests');
-      // Fetch all financial literacy resources
-      const litRes = await axios.get('/api/financial-literacy');
-      setFundingRequests(reqRes.data);
-      setResources(litRes.data);
+      const fundingRes = await axios.get('/api/funding-requests');
+      const resourceRes = await axios.get('/api/financial-literacy');
+      setFundingRequests(fundingRes.data);
+      setResources(resourceRes.data);
     } catch (err) {
       console.error('AdminDashboard fetch error:', err);
       setError('Error fetching data');
@@ -34,15 +30,11 @@ function AdminDashboard() {
     }
   };
 
-  // Delete a funding request
-  const handleDeleteRequest = async (id) => {
+  const handleDeleteFunding = async (id) => {
     try {
       await axios.delete(`/api/funding-requests/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
-      // Remove it from the list
       setFundingRequests(prev => prev.filter(item => item._id !== id));
     } catch (err) {
       console.error('Error deleting funding request:', err);
@@ -50,15 +42,11 @@ function AdminDashboard() {
     }
   };
 
-  // Delete a financial literacy resource
   const handleDeleteResource = async (id) => {
     try {
       await axios.delete(`/api/financial-literacy/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
-      // Remove it from the list
       setResources(prev => prev.filter(item => item._id !== id));
     } catch (err) {
       console.error('Error deleting resource:', err);
@@ -78,10 +66,9 @@ function AdminDashboard() {
         </div>
       ) : (
         <>
-          {/* Funding Requests Section */}
-          <h4>All Funding Requests</h4>
+          <h4>Funding Requests</h4>
           {fundingRequests.length === 0 ? (
-            <p>No funding requests found.</p>
+            <p>No funding requests available.</p>
           ) : (
             <table className="table table-bordered">
               <thead>
@@ -90,7 +77,6 @@ function AdminDashboard() {
                   <th>Amount</th>
                   <th>Purpose</th>
                   <th>Description</th>
-                  <th>Created By</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -101,12 +87,8 @@ function AdminDashboard() {
                     <td>{req.amountRequested}</td>
                     <td>{req.purpose}</td>
                     <td>{req.description}</td>
-                    <td>{req.createdBy || 'N/A'}</td>
                     <td>
-                      <button
-                        className="btn btn-sm btn-danger"
-                        onClick={() => handleDeleteRequest(req._id)}
-                      >
+                      <button className="btn btn-danger btn-sm" onClick={() => handleDeleteFunding(req._id)}>
                         Delete
                       </button>
                     </td>
@@ -118,10 +100,9 @@ function AdminDashboard() {
 
           <hr />
 
-          {/* Financial Literacy Resources Section */}
-          <h4>All Financial Literacy Resources</h4>
+          <h4>Financial Literacy Resources</h4>
           {resources.length === 0 ? (
-            <p>No resources found.</p>
+            <p>No resources available.</p>
           ) : (
             <table className="table table-bordered">
               <thead>
@@ -129,30 +110,19 @@ function AdminDashboard() {
                   <th>Title</th>
                   <th>Description</th>
                   <th>Type</th>
-                  <th>URL</th>
                   <th>Created By</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {resources.map(r => (
-                  <tr key={r._id}>
-                    <td>{r.title}</td>
-                    <td>{r.description}</td>
-                    <td>{r.resourceType}</td>
+                {resources.map(res => (
+                  <tr key={res._id}>
+                    <td>{res.title}</td>
+                    <td>{res.description}</td>
+                    <td>{res.resourceType}</td>
+                    <td>{res.createdBy?.name || 'N/A'}</td>
                     <td>
-                      {r.url ? (
-                        <a href={r.url} target="_blank" rel="noopener noreferrer">
-                          Link
-                        </a>
-                      ) : 'N/A'}
-                    </td>
-                    <td>{r.createdBy?.name || 'N/A'}</td>
-                    <td>
-                      <button
-                        className="btn btn-sm btn-danger"
-                        onClick={() => handleDeleteResource(r._id)}
-                      >
+                      <button className="btn btn-danger btn-sm" onClick={() => handleDeleteResource(res._id)}>
                         Delete
                       </button>
                     </td>
@@ -161,6 +131,10 @@ function AdminDashboard() {
               </tbody>
             </table>
           )}
+
+          <div className="mt-4">
+            <Link to="/" className="btn btn-secondary">Back to Home</Link>
+          </div>
         </>
       )}
     </div>

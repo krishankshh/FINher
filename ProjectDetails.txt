@@ -1,0 +1,113 @@
+Project Overview: FinHER
+FinHER is a comprehensive web platform designed to empower women entrepreneurs by providing access to funding opportunities, financial literacy resources, credit evaluation tools, and alternative financing channels. The platform also includes an administrative panel for managing content and user-generated funding requests. The project was built for a hackathon challenge and integrates both backend and frontend components.
+
+Tech Stack
+Backend:
+
+Node.js with Express for the server
+MongoDB (using Mongoose) for data storage
+JWT for authentication and authorization
+Nodemailer for sending OTP emails
+Environment variables managed through dotenv
+Frontend:
+
+React for building the user interface
+React Router for navigation
+Bootstrap for responsive design and styling
+Framer Motion for smooth page transitions and animations
+React-Toastify for toast notifications
+Axios for API calls
+Other Tools:
+
+A proxy configured in the client’s package.json to forward API requests to the backend
+GitHub Codespaces (or a similar environment) for development and testing
+Key Features
+1. User Authentication & OTP-Based Password Reset
+Registration & Login:
+
+Users can register and log in using their email and password.
+Passwords are securely hashed using bcrypt.
+Upon successful login, a JWT token is generated (including the user’s role) and stored in local storage.
+OTP-Based Password Reset:
+
+When a user forgets their password, they can request an OTP by entering their email.
+The server generates a 6-digit OTP and emails it to the user using Nodemailer.
+The user then submits the OTP along with a new password to reset their password.
+This flow avoids the complexities of clickable reset links and works well on development environments (like localhost).
+2. Funding Requests
+CRUD Operations:
+Create, Read, Update, and Delete funding requests are implemented.
+Only logged-in users can create funding requests.
+Each request includes details like the entrepreneur’s name, requested amount, purpose, description, contact phone, and address.
+Funding requests are associated with the user who created them (via the createdBy field).
+Normal users can update/delete their own requests, while admins have privileges to manage all requests.
+3. Financial Literacy Resources
+Public Resource Display & Search:
+
+The platform displays various financial literacy resources (e.g., articles, videos, courses) that are publicly visible.
+A search bar allows users to filter resources by title or description.
+Resource Creation:
+
+Only logged-in users are allowed to add new financial literacy resources.
+When a resource is created, it is tagged with the createdBy field (referring to the user who added it) and timestamps are automatically generated.
+The GET endpoint for resources also populates the creator's name so users can see who added the resource and when.
+4. Alternative Financing Channels
+Actionable Funding Information:
+The platform provides information on alternative funding channels (such as government schemes, microloans, crowdfunding platforms, and angel networks) through a dedicated section.
+This section helps women entrepreneurs find additional financing options beyond traditional banking channels.
+5. Robust AI Credit Evaluation System
+Credit Score Simulation:
+The system simulates an AI-powered credit evaluation by taking several inputs:
+Entrepreneur's name (as a proxy for experience)
+Amount requested
+Purpose of the loan
+Business revenue
+Business age
+Collateral value
+Based on these inputs, the system computes a credit score (clamped between 300 and 850) and provides a recommendation:
+If the score is above a threshold (e.g., 700), the applicant is eligible for standard funding.
+Otherwise, alternative financing options are recommended.
+While this simulation uses fixed logic, it could be extended to use real machine learning models or external credit evaluation APIs in a production system.
+6. Administrative Panel
+Admin Role:
+
+Users can be assigned a role (default is "user", but a user with role "admin" has extra privileges).
+The admin can access an Admin Panel through a dedicated route (/admin).
+Admin Dashboard:
+
+Displays all funding requests and financial literacy resources.
+Allows the admin to delete or update any funding request or resource regardless of who created it.
+The NavBar includes a link to the Admin Panel, visible only if the logged-in user's role is "admin".
+7. Enhanced UI/UX
+Smooth Transitions & Animations:
+
+The project uses Framer Motion for smooth page transitions, creating an engaging navigation experience.
+React-Toastify is used for toast notifications to provide immediate feedback on user actions.
+Responsive Design & Consistent Styling:
+
+The app is built with Bootstrap to ensure responsiveness and a clean, consistent layout.
+Customizations like extra spacing (using mb-5 and pb-5) prevent elements from crowding the footer.
+Improved Navigation:
+
+The NavBar is now sticky and updated (black background, white text) for a modern look.
+Clear links are provided for all main sections of the app.
+How It All Integrates
+Backend (Server):
+
+The server.js file integrates all routes (auth, OTP, funding requests, alternative funding, financial literacy, and credit evaluation).
+Authentication and protected routes are handled via JWT and authMiddleware.
+Mongoose is used for defining models, and MongoDB stores all data (users, funding requests, resources, etc.).
+Frontend (Client):
+
+The React app uses React Router to navigate between pages.
+Each major feature (auth, funding requests, credit evaluation, financial literacy, admin panel) has its own component.
+The NavBar displays different links based on whether a user is logged in and if they are an admin.
+Smooth transitions and toast notifications enhance the user experience.
+Deployment:
+
+For local development, a proxy is set in client/package.json so that API calls from the React app (running on port 3000) are forwarded to the Node.js server (running on port 5000).
+Environment variables (like MONGO_URI and JWT_SECRET) are managed using a .env file.
+Conclusion
+FinHER is a robust, full-featured platform aimed at empowering women entrepreneurs through secure authentication, funding requests management, alternative financing information, educational resources, and a credit evaluation tool. The admin panel provides a backend for content moderation, and the UI/UX enhancements create a modern, responsive, and user-friendly experience.
+
+This detailed explanation should help you understand every component of the project and how they integrate to form the complete solution. Let me know if you need further details or additional explanations!
