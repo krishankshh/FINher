@@ -1,7 +1,7 @@
 // client/src/ResetPassword.js
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import axios from './axiosInstance';
 
 function ResetPassword() {
   const { token } = useParams();

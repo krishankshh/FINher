@@ -1,6 +1,6 @@
 // client/src/CreditEvaluation.js
 import React, { useState } from 'react';
-import axios from 'axios';
+import axios from './axiosInstance';
 
 function CreditEvaluation() {
   const [formData, setFormData] = useState({

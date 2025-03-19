@@ -1,7 +1,7 @@
 // client/src/ForgotPasswordOTP.js
 
 import React, { useState } from 'react';
-import axios from 'axios';
+import axios from './axiosInstance';
 
 function ForgotPasswordOTP() {
   // Step control: 1 = user enters email, 2 = user enters OTP & new password

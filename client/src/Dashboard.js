@@ -1,6 +1,6 @@
 // client/src/Dashboard.js
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from './axiosInstance';
 
 function Dashboard({ user, token }) {
   const [requests, setRequests] = useState([]);

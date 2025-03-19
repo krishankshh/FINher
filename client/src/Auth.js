@@ -1,6 +1,6 @@
 // client/src/Auth.js
 import React, { useState } from 'react';
-import axios from 'axios';
+import axios from './axiosInstance';
 
 function Auth({ onAuthSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
