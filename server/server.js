@@ -19,11 +19,12 @@ app.use(cors());
    Mongoose Models (defined inline for completeness)
 --------------------------------------------------------------------------- */
 
-// User Model
+// User Model (now with role)
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true, lowercase: true },
   password: { type: String, required: true },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' },
   otpCode: { type: String },
   otpExpires: { type: Date }
 }, { timestamps: true });
@@ -50,25 +51,36 @@ const alternativeFundingOptionSchema = new mongoose.Schema({
 }, { timestamps: true });
 const AlternativeFundingOption = mongoose.model('AlternativeFundingOption', alternativeFundingOptionSchema);
 
-// Financial Literacy Resource Model
+// Financial Literacy Resource Model (includes createdBy)
 const financialLiteracyResourceSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
-  url: { type: String }
+  resourceType: {
+    type: String,
+    enum: ['article', 'video', 'course'],
+    default: 'article'
+  },
+  url: { type: String },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 }, { timestamps: true });
 const FinancialLiteracyResource = mongoose.model('FinancialLiteracyResource', financialLiteracyResourceSchema);
 
 /* --------------------------------------------------------------------------
-   Simulated Auth Middleware
+   Auth Middleware (JWT-based, with role)
 --------------------------------------------------------------------------- */
-// For production, you'd verify the JWT; here we decode it using JWT_SECRET.
 const authMiddleware = (req, res, next) => {
-  const token = req.headers.authorization;
-  if (!token) return res.status(401).json({ message: 'No token provided' });
+  const authHeader = req.headers.authorization; // Expect "Bearer <token>"
+  if (!authHeader) return res.status(401).json({ message: 'No token provided' });
+  const parts = authHeader.split(' ');
+  if (parts.length !== 2 || parts[0] !== 'Bearer') {
+    return res.status(401).json({ message: 'Invalid token format' });
+  }
+  const token = parts[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
-    req.user = { userId: decoded.userId };
+    req.user = { userId: decoded.userId, role: decoded.role };
   } catch (error) {
+    console.error('authMiddleware error:', error);
     return res.status(401).json({ message: 'Invalid token' });
   }
   next();
@@ -88,16 +100,16 @@ app.get('/', (req, res) => {
 // Register: POST /api/auth/register
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body; // Optionally, an admin can be created manually via DB or controlled endpoint
     const existing = await User.findOne({ email });
     if (existing) return res.status(400).json({ message: 'User already exists' });
     const salt = await bcrypt.genSalt(10);
     const hashed = await bcrypt.hash(password, salt);
-    const newUser = new User({ name, email, password: hashed });
+    const newUser = new User({ name, email, password: hashed, role: role || 'user' });
     const savedUser = await newUser.save();
     res.status(201).json({ 
       message: 'User registered successfully', 
-      user: { _id: savedUser._id, name: savedUser.name, email: savedUser.email }
+      user: { _id: savedUser._id, name: savedUser.name, email: savedUser.email, role: savedUser.role }
     });
   } catch (error) {
     console.error('Register error:', error);
@@ -114,11 +126,12 @@ app.post('/api/auth/login', async (req, res) => {
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
-    res.json({ 
-      message: 'Login successful', 
-      token, 
-      user: { _id: user._id, name: user.name, email: user.email }
+    // Include role in the token payload
+    const token = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
+    res.json({
+      message: 'Login successful',
+      token,
+      user: { _id: user._id, name: user.name, email: user.email, role: user.role }
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -184,7 +197,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
 
 /* ----- Funding Request Routes ----- */
 
-// Public GET: All funding requests
+// GET all funding requests (public)
 app.get('/api/funding-requests', async (req, res) => {
   try {
     const requests = await FundingRequest.find();
@@ -195,7 +208,7 @@ app.get('/api/funding-requests', async (req, res) => {
   }
 });
 
-// Public GET: Single funding request details
+// GET single funding request (public)
 app.get('/api/funding-requests/:id', async (req, res) => {
   try {
     const request = await FundingRequest.findById(req.params.id);
@@ -207,7 +220,7 @@ app.get('/api/funding-requests/:id', async (req, res) => {
   }
 });
 
-// Protected GET: Funding requests created by the logged-in user
+// GET funding requests for logged-in user (protected)
 app.get('/api/my-funding-requests', authMiddleware, async (req, res) => {
   try {
     const requests = await FundingRequest.find({ createdBy: req.user.userId });
@@ -218,7 +231,7 @@ app.get('/api/my-funding-requests', authMiddleware, async (req, res) => {
   }
 });
 
-// Protected POST: Create a new funding request
+// POST create a new funding request (protected)
 app.post('/api/funding-requests', authMiddleware, async (req, res) => {
   try {
     const { entrepreneurName, amountRequested, purpose, description, contactPhone, contactAddress } = req.body;
@@ -239,7 +252,8 @@ app.post('/api/funding-requests', authMiddleware, async (req, res) => {
   }
 });
 
-// Protected PUT: Update a funding request
+// PUT update a funding request (protected)
+// Admins can update any request; others can update only their own
 app.put('/api/funding-requests/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
@@ -247,7 +261,10 @@ app.put('/api/funding-requests/:id', authMiddleware, async (req, res) => {
     const { entrepreneurName, amountRequested, purpose, description, contactPhone, contactAddress } = req.body;
     const existingRequest = await FundingRequest.findById(id);
     if (!existingRequest) return res.status(404).json({ message: 'Funding request not found' });
-    if (existingRequest.createdBy.toString() !== userId) return res.status(403).json({ message: 'Not authorized to update this request' });
+    // Allow update if user is the owner or admin
+    if (existingRequest.createdBy.toString() !== userId && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to update this request' });
+    }
     existingRequest.entrepreneurName = entrepreneurName;
     existingRequest.amountRequested = amountRequested;
     existingRequest.purpose = purpose;
@@ -262,14 +279,17 @@ app.put('/api/funding-requests/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// Protected DELETE: Delete a funding request
+// DELETE a funding request (protected)
+// Admins can delete any request; others can delete only their own
 app.delete('/api/funding-requests/:id', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.userId;
     const existingRequest = await FundingRequest.findById(id);
     if (!existingRequest) return res.status(404).json({ message: 'Funding request not found' });
-    if (existingRequest.createdBy.toString() !== userId) return res.status(403).json({ message: 'Not authorized to delete this request' });
+    if (existingRequest.createdBy.toString() !== userId && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to delete this request' });
+    }
     await existingRequest.deleteOne();
     res.status(200).json({ message: 'Funding request deleted successfully' });
   } catch (error) {
@@ -279,7 +299,6 @@ app.delete('/api/funding-requests/:id', authMiddleware, async (req, res) => {
 });
 
 /* ----- Alternative Funding Options ----- */
-// GET alternative funding options
 app.get('/api/funding-options', async (req, res) => {
   try {
     const options = await AlternativeFundingOption.find();
@@ -291,10 +310,21 @@ app.get('/api/funding-options', async (req, res) => {
 });
 
 /* ----- Financial Literacy Resources ----- */
-// GET financial literacy resources
+// GET financial literacy resources with search (public)
 app.get('/api/financial-literacy', async (req, res) => {
   try {
-    const resources = await FinancialLiteracyResource.find();
+    const search = req.query.search || '';
+    const query = {};
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+    const resources = await FinancialLiteracyResource
+      .find(query)
+      .populate('createdBy', 'name')
+      .sort({ createdAt: -1 });
     res.status(200).json(resources);
   } catch (error) {
     console.error('Error fetching financial literacy resources:', error);
@@ -302,8 +332,46 @@ app.get('/api/financial-literacy', async (req, res) => {
   }
 });
 
+// POST create a new financial literacy resource (protected)
+// Only logged-in users can add resources. Admins can add and later delete any resource.
+app.post('/api/financial-literacy', authMiddleware, async (req, res) => {
+  try {
+    const { title, description, resourceType, url } = req.body;
+    const newResource = new FinancialLiteracyResource({
+      title,
+      description,
+      resourceType: resourceType || 'article',
+      url,
+      createdBy: req.user.userId
+    });
+    const saved = await newResource.save();
+    await saved.populate('createdBy', 'name');
+    res.status(201).json(saved);
+  } catch (error) {
+    console.error('Error creating financial literacy resource:', error);
+    res.status(500).json({ message: 'Error creating financial literacy resource' });
+  }
+});
+
+// DELETE financial literacy resource (protected)
+// Admins can delete any resource; others can delete only their own.
+app.delete('/api/financial-literacy/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const resource = await FinancialLiteracyResource.findById(id);
+    if (!resource) return res.status(404).json({ message: 'Resource not found' });
+    if (resource.createdBy.toString() !== req.user.userId && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to delete this resource' });
+    }
+    await resource.deleteOne();
+    res.status(200).json({ message: 'Resource deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting resource:', error);
+    res.status(500).json({ message: 'Error deleting resource' });
+  }
+});
+
 /* ----- Robust AI Credit Evaluation ----- */
-// POST robust credit evaluation
 app.post('/api/credit-evaluation', async (req, res) => {
   try {
     const {
@@ -317,7 +385,7 @@ app.post('/api/credit-evaluation', async (req, res) => {
     
     let score = 500;
     
-    // Adjust based on amount requested
+    // Amount Requested
     if (amountRequested < 100000) {
       score += 100;
     } else if (amountRequested < 500000) {
@@ -326,7 +394,7 @@ app.post('/api/credit-evaluation', async (req, res) => {
       score -= 50;
     }
     
-    // Adjust based on business revenue
+    // Business Revenue
     if (businessRevenue >= 1000000) {
       score += 100;
     } else if (businessRevenue >= 500000) {
@@ -335,7 +403,7 @@ app.post('/api/credit-evaluation', async (req, res) => {
       score -= 20;
     }
     
-    // Adjust based on business age
+    // Business Age
     if (businessAge >= 5) {
       score += 50;
     } else if (businessAge >= 2) {
@@ -344,7 +412,7 @@ app.post('/api/credit-evaluation', async (req, res) => {
       score -= 20;
     }
     
-    // Adjust based on collateral value
+    // Collateral Value
     if (collateralValue && amountRequested) {
       if (collateralValue >= amountRequested * 1.5) {
         score += 50;
@@ -355,7 +423,7 @@ app.post('/api/credit-evaluation', async (req, res) => {
       }
     }
     
-    // Adjust based on purpose
+    // Purpose
     if (purpose) {
       const purposeLower = purpose.toLowerCase();
       if (purposeLower.includes('expansion') || purposeLower.includes('growth')) {
@@ -365,7 +433,7 @@ app.post('/api/credit-evaluation', async (req, res) => {
       }
     }
     
-    // Adjust based on entrepreneur name length (dummy proxy for experience)
+    // Entrepreneur Name Length (dummy proxy for experience)
     if (entrepreneurName) {
       if (entrepreneurName.length > 10) {
         score += 20;
@@ -379,13 +447,13 @@ app.post('/api/credit-evaluation', async (req, res) => {
     if (score < 300) score = 300;
     
     const recommendation = score > 700
-      ? "Eligible for standard funding"
-      : "Consider alternative financing options";
+      ? 'Eligible for standard funding'
+      : 'Consider alternative financing options';
     
     res.status(200).json({ creditScore: score, recommendation });
   } catch (error) {
-    console.error("Error in robust credit evaluation:", error);
-    res.status(500).json({ message: "Error evaluating credit" });
+    console.error('Error in robust credit evaluation:', error);
+    res.status(500).json({ message: 'Error evaluating credit' });
   }
 });
 
@@ -393,7 +461,8 @@ app.post('/api/credit-evaluation', async (req, res) => {
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || '';
 
-mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose
+  .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
     console.log('Connected to MongoDB');
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

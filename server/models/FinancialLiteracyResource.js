@@ -9,7 +9,12 @@ const FinancialLiteracyResourceSchema = new mongoose.Schema({
     enum: ['article', 'video', 'course'],
     default: 'article'
   },
-  url: { type: String }  // Link to the article, video, or course
+  url: { type: String },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  }
 }, { timestamps: true });
 
 const FinancialLiteracyResource = mongoose.model('FinancialLiteracyResource', FinancialLiteracyResourceSchema);

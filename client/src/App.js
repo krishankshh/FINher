@@ -16,6 +16,9 @@ import ForgotPasswordOTP from './ForgotPasswordOTP';
 import ResetPassword from './ResetPassword';
 import Footer from './Footer';
 
+// Import your AdminDashboard (create it if you haven't yet)
+import AdminDashboard from './AdminDashboard';
+
 function App() {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState('');
@@ -47,16 +50,14 @@ function App() {
     <div className="d-flex flex-column min-vh-100">
       <Router>
         <NavBar user={user} onLogout={handleLogout} />
-        {/* 
-          Added mb-5 pb-5 to create a bottom margin & padding,
-          ensuring content doesn't crowd the footer.
-        */}
+        {/* Extra bottom margin & padding to avoid content crowding the footer */}
         <div className="container flex-grow-1 mt-4 mb-5 pb-5">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/credit-evaluation" element={<CreditEvaluation />} />
             <Route path="/financial-literacy" element={<FinancialLiteracy />} />
             <Route path="/alternative-funding" element={<AlternativeFunding />} />
+
             <Route
               path="/auth"
               element={
@@ -72,6 +73,15 @@ function App() {
             <Route path="/funding/:id" element={<FundingRequestDetail />} />
             <Route path="/forgot-password" element={<ForgotPasswordOTP />} />
             <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+            {/* Admin route: only accessible if user && user.role === 'admin' */}
+            <Route
+              path="/admin"
+              element={
+                user && user.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />
+              }
+            />
+
             <Route path="*" element={<h2>404 - Page Not Found</h2>} />
           </Routes>
         </div>

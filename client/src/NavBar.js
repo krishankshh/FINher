@@ -1,3 +1,4 @@
+// client/src/NavBar.js
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -20,9 +21,6 @@ function NavBar({ user, onLogout }) {
         <div className="collapse navbar-collapse" id="navMenu">
           <ul className="navbar-nav ms-auto">
             <li className="nav-item">
-              <Link className="nav-link" to="/">Home</Link>
-            </li>
-            <li className="nav-item">
               <Link className="nav-link" to="/credit-evaluation">Credit Evaluation</Link>
             </li>
             <li className="nav-item">
@@ -31,6 +29,14 @@ function NavBar({ user, onLogout }) {
             <li className="nav-item">
               <Link className="nav-link" to="/alternative-funding">Alternative Funding</Link>
             </li>
+
+            {/* If user is admin, show Admin Panel link */}
+            {user && user.role === 'admin' && (
+              <li className="nav-item">
+                <Link className="nav-link" to="/admin">Admin Panel</Link>
+              </li>
+            )}
+
             {!user ? (
               <li className="nav-item">
                 <Link className="nav-link" to="/auth">Login / Register</Link>

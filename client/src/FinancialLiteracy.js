@@ -7,7 +7,10 @@ function FinancialLiteracy() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Optional: form state for creating a new resource
+  // For searching
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // For creating new resource
   const [newResource, setNewResource] = useState({
     title: '',
     description: '',
@@ -15,14 +18,18 @@ function FinancialLiteracy() {
     url: ''
   });
 
+  // If token is in localStorage, user is logged in
+  const token = localStorage.getItem('token') || '';
+
   useEffect(() => {
-    fetchResources();
+    fetchResources('');
   }, []);
 
-  const fetchResources = async () => {
+  const fetchResources = async (term) => {
     setLoading(true);
+    setError('');
     try {
-      const res = await axios.get('/api/financial-literacy');
+      const res = await axios.get(`/api/financial-literacy?search=${encodeURIComponent(term)}`);
       setResources(res.data);
     } catch (err) {
       console.error('Error fetching resources:', err);
@@ -32,12 +39,30 @@ function FinancialLiteracy() {
     }
   };
 
-  // Handler for creating a new resource
+  // Handle search
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    fetchResources(searchTerm);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Handle creating resource
   const handleCreateResource = async (e) => {
     e.preventDefault();
+    setError('');
     try {
-      const res = await axios.post('/api/financial-literacy', newResource);
-      setResources(prev => [...prev, res.data]); // Add the newly created resource to the list
+      // Must have "Bearer <token>"
+      const res = await axios.post('/api/financial-literacy', newResource, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      // Insert at front
+      setResources(prev => [res.data, ...prev]);
+      // Reset form
       setNewResource({
         title: '',
         description: '',
@@ -58,8 +83,23 @@ function FinancialLiteracy() {
   return (
     <div className="container mt-4">
       <h2>Financial Literacy Resources</h2>
-      
       {error && <p className="text-danger">{error}</p>}
+
+      {/* Search */}
+      <form onSubmit={handleSearchSubmit} className="mb-3" style={{ maxWidth: '400px' }}>
+        <label className="form-label">Search Resources:</label>
+        <input
+          type="text"
+          className="form-control"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Search by title or description..."
+        />
+        <button type="submit" className="btn btn-secondary mt-2">
+          Search
+        </button>
+      </form>
+
       {loading ? (
         <div className="text-center mt-3">
           <div className="spinner-border text-primary" role="status">
@@ -68,9 +108,8 @@ function FinancialLiteracy() {
         </div>
       ) : (
         <>
-          {/* Display Existing Resources */}
           {resources.length === 0 ? (
-            <p>No resources available at the moment.</p>
+            <p>No resources found.</p>
           ) : (
             <div className="row">
               {resources.map(resource => (
@@ -85,11 +124,19 @@ function FinancialLiteracy() {
                           href={resource.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="btn btn-primary"
+                          className="btn btn-primary me-2"
                         >
                           Access Resource
                         </a>
                       )}
+                      {resource.createdBy && (
+                        <p className="mt-2 mb-0">
+                          <small>Created by: <strong>{resource.createdBy.name}</strong></small>
+                        </p>
+                      )}
+                      <p className="mb-0">
+                        <small>On: {new Date(resource.createdAt).toLocaleString()}</small>
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -97,59 +144,63 @@ function FinancialLiteracy() {
             </div>
           )}
 
-          {/* (Optional) Form to Create a New Resource */}
-          <hr />
-          <h4>Add a New Resource</h4>
-          <form onSubmit={handleCreateResource}>
-            <div className="mb-3">
-              <label>Title:</label>
-              <input
-                type="text"
-                name="title"
-                className="form-control"
-                value={newResource.title}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="mb-3">
-              <label>Description:</label>
-              <textarea
-                name="description"
-                className="form-control"
-                value={newResource.description}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="mb-3">
-              <label>Resource Type:</label>
-              <select
-                name="resourceType"
-                className="form-select"
-                value={newResource.resourceType}
-                onChange={handleChange}
-                required
-              >
-                <option value="article">Article</option>
-                <option value="video">Video</option>
-                <option value="course">Course</option>
-              </select>
-            </div>
-            <div className="mb-3">
-              <label>URL:</label>
-              <input
-                type="url"
-                name="url"
-                className="form-control"
-                value={newResource.url}
-                onChange={handleChange}
-              />
-            </div>
-            <button type="submit" className="btn btn-success">
-              Add Resource
-            </button>
-          </form>
+          {/* Only show form if token is present (user logged in) */}
+          {token && (
+            <>
+              <hr />
+              <h4>Add a New Resource</h4>
+              <form onSubmit={handleCreateResource}>
+                <div className="mb-3">
+                  <label>Title:</label>
+                  <input
+                    type="text"
+                    name="title"
+                    className="form-control"
+                    value={newResource.title}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="mb-3">
+                  <label>Description:</label>
+                  <textarea
+                    name="description"
+                    className="form-control"
+                    value={newResource.description}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="mb-3">
+                  <label>Resource Type:</label>
+                  <select
+                    name="resourceType"
+                    className="form-select"
+                    value={newResource.resourceType}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="article">Article</option>
+                    <option value="video">Video</option>
+                    <option value="course">Course</option>
+                  </select>
+                </div>
+                <div className="mb-3">
+                  <label>URL:</label>
+                  <input
+                    type="url"
+                    name="url"
+                    className="form-control"
+                    value={newResource.url}
+                    onChange={handleChange}
+                  />
+                </div>
+                <button type="submit" className="btn btn-success">
+                  Add Resource
+                </button>
+              </form>
+            </>
+          )}
         </>
       )}
     </div>
