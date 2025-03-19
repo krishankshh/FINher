@@ -147,7 +147,7 @@ Admin users can log in (with role: "admin") to access the admin dashboard for ma
 --
 
 Project Structure
-    ```java
+    ```bash
     Copy
     Edit
     FinHER/
@@ -202,5 +202,5 @@ Implement feedback forms or surveys to gather insights and further improve the p
 --
 
 License
-    ```vbnet
+    ```bash
     This project is open source and available under the MIT License.
