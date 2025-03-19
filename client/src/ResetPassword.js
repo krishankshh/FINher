@@ -1,5 +1,6 @@
+// client/src/ResetPassword.js
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 
 function ResetPassword() {
@@ -7,17 +8,16 @@ function ResetPassword() {
   const [newPassword, setNewPassword] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resetSuccessful, setResetSuccessful] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
-
     try {
-      const response = await axios.post(`/api/auth/reset-password/${token}`, {
-        newPassword
-      });
-      setMessage(response.data.message || 'Password reset successful!');
+      const res = await axios.post(`/api/auth/reset-password/${token}`, { newPassword });
+      setMessage(res.data.message || 'Password reset successful!');
+      setResetSuccessful(true);
     } catch (error) {
       setMessage(error.response?.data?.message || 'Error resetting password');
     } finally {
@@ -30,7 +30,7 @@ function ResetPassword() {
       <h2>Reset Your Password</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label>New Password</label>
+          <label className="form-label">New Password</label>
           <input
             type="password"
             className="form-control"
@@ -43,7 +43,6 @@ function ResetPassword() {
           {loading ? 'Setting...' : 'Set New Password'}
         </button>
       </form>
-
       {loading && (
         <div className="text-center mt-3">
           <div className="spinner-border text-primary" role="status">
@@ -51,8 +50,14 @@ function ResetPassword() {
           </div>
         </div>
       )}
-
       {message && <p className="mt-3">{message}</p>}
+      {resetSuccessful && (
+        <div className="mt-3">
+          <Link to="/auth" className="btn btn-link">
+            Click here to Login
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ function Auth({ onAuthSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
@@ -20,15 +21,19 @@ function Auth({ onAuthSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setMessage('');
+
     try {
       if (isLogin) {
         // Login
+        // Because we have a proxy, we can call /api/auth/login
         const res = await axios.post('/api/auth/login', {
           email: formData.email,
           password: formData.password
         });
         setMessage(`Login successful! Welcome ${res.data.user.name}`);
-        onAuthSuccess(res.data.user, res.data.token);
+        onAuthSuccess && onAuthSuccess(res.data.user, res.data.token);
       } else {
         // Register
         const res = await axios.post('/api/auth/register', {
@@ -39,7 +44,10 @@ function Auth({ onAuthSuccess }) {
         setMessage(`Registration successful! Welcome ${res.data.user.name}`);
       }
     } catch (error) {
+      console.error('Auth error:', error);
       setMessage(error.response?.data?.message || 'An error occurred');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,24 +90,20 @@ function Auth({ onAuthSuccess }) {
             required
           />
         </div>
-        <button className="btn btn-primary w-100" type="submit">
-          {isLogin ? 'Login' : 'Register'}
+        <button className="btn btn-primary w-100" type="submit" disabled={loading}>
+          {loading ? 'Processing...' : isLogin ? 'Login' : 'Register'}
         </button>
       </form>
-
       {message && <p className="mt-3 text-center text-success">{message}</p>}
-
       <div className="text-center mt-2">
         <button onClick={toggleMode} className="btn btn-link">
-          {isLogin ? "Don't have an account? Register" : "Already have an account? Login"}
+          {isLogin ? "Don't have an account? Register" : 'Already have an account? Login'}
         </button>
       </div>
-
-      {/* Forgot Password? link for OTP-based reset */}
       {isLogin && (
         <div className="text-center mt-2">
           <a href="/forgot-password" className="text-decoration-none">
-            Forgot Password? (OTP)
+            Forgot Password?
           </a>
         </div>
       )}
